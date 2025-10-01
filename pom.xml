@@ -9,7 +9,7 @@
         <relativePath/>
     </parent>
     <groupId>com.celada</groupId>
-    <artifactId>backend.dev.test</artifactId>
+    <artifactId>backend.dev</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>Backend Dev Test</name>
     <properties>
