@@ -2,9 +2,7 @@ package com.celada.backend.dev.inbound.rest.controller;
 
 import com.celada.backend.dev.domain.model.Product;
 import com.celada.backend.dev.domain.service.ProductService;
-import com.celada.backend.dev.inbound.rest.adapter.ProductRestAdapter;
 import com.celada.openapi.model.ProductDetail;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -17,7 +15,8 @@ import java.math.BigDecimal;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
@@ -40,7 +39,7 @@ class ProductControllerTest {
         // Given
         Product testProduct = createTestProduct();
         when(productService.getProductSimilar(anyString()))
-            .thenReturn(Set.of(testProduct));
+                .thenReturn(Set.of(testProduct));
 
         // When
         ResponseEntity<Set<ProductDetail>> response = productController.getProductSimilar(TEST_PRODUCT_ID);
@@ -55,7 +54,7 @@ class ProductControllerTest {
         // Given
         Product testProduct = createTestProduct();
         when(productService.getProductSimilar(TEST_PRODUCT_ID))
-            .thenReturn(Set.of(testProduct));
+                .thenReturn(Set.of(testProduct));
 
         // When
         ResponseEntity<Set<ProductDetail>> response = productController.getProductSimilar(TEST_PRODUCT_ID);
@@ -64,7 +63,7 @@ class ProductControllerTest {
         Set<ProductDetail> productDetails = response.getBody();
         assertNotNull(productDetails);
         assertEquals(1, productDetails.size());
-        
+
         ProductDetail productDetail = productDetails.iterator().next();
         assertEquals(TEST_PRODUCT_ID, productDetail.getId());
         assertEquals(TEST_PRODUCT_NAME, productDetail.getName());
@@ -77,7 +76,7 @@ class ProductControllerTest {
         // Given
         String expectedProductId = "test-id-123";
         when(productService.getProductSimilar(expectedProductId))
-            .thenReturn(Set.of(createTestProduct()));
+                .thenReturn(Set.of(createTestProduct()));
 
         // When
         productController.getProductSimilar(expectedProductId);
@@ -87,10 +86,10 @@ class ProductControllerTest {
 
     private Product createTestProduct() {
         return Product.builder()
-            .id(TEST_PRODUCT_ID)
-            .name(TEST_PRODUCT_NAME)
-            .price(TEST_PRICE)
-            .availability(TEST_AVAILABILITY)
-            .build();
+                .id(TEST_PRODUCT_ID)
+                .name(TEST_PRODUCT_NAME)
+                .price(TEST_PRICE)
+                .availability(TEST_AVAILABILITY)
+                .build();
     }
 }
