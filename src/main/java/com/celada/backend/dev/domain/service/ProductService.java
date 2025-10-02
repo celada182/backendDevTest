@@ -4,8 +4,7 @@ import com.celada.backend.dev.domain.model.Product;
 import com.celada.backend.dev.domain.repository.ExistingProductRepository;
 import org.springframework.stereotype.Component;
 
-import java.math.BigDecimal;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.Set;
 
 @Component
@@ -18,15 +17,7 @@ public class ProductService {
     }
 
     public Set<Product> getProductSimilar(String productId) {
-        Set<Product> products = new HashSet<>();
-        Product product = Product.builder()
-                .id(productId)
-                .name("Product 1")
-                .price(BigDecimal.TEN)
-                .build();
-        products.add(product);
-        Product existingProduct = existingProductRepository.getProduct(productId);
-        Set<String> similarIds = existingProductRepository.getProductSimilarIds(productId);
-        return products;
+        if (productId == null) return Collections.emptySet();
+        return existingProductRepository.getSimilarProducts(productId);
     }
 }

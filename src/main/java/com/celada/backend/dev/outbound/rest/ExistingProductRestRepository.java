@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.web.client.RestClient;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 @Repository
@@ -36,5 +37,17 @@ public class ExistingProductRestRepository implements ExistingProductRepository 
                 .body(String[].class);
         if (result == null) return Collections.emptySet();
         return Set.of(result);
+    }
+
+    @Override
+    public Set<Product> getSimilarProducts(String productId) {
+        if (productId == null) return Collections.emptySet();
+        Set<String> ids = getProductSimilarIds(productId);
+        Set<Product> products = new HashSet<>();
+        for (String id : ids) {
+            Product product = getProduct(id);
+            products.add(product);
+        }
+        return products;
     }
 }

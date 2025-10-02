@@ -1,70 +1,91 @@
 package com.celada.backend.dev.domain.service;
 
 import com.celada.backend.dev.domain.model.Product;
+import com.celada.backend.dev.domain.repository.ExistingProductRepository;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class ProductServiceTest {
 
-    private final ProductService productService = new ProductService();
+    @Mock
+    private ExistingProductRepository existingProductRepository;
+
+    @InjectMocks
+    private ProductService productService;
+
     private static final String TEST_PRODUCT_ID = "test-123";
-    private static final String EXPECTED_NAME = "Product 1";
-    private static final BigDecimal EXPECTED_PRICE = new BigDecimal("10.00");
+    private static final String SIMILAR_PRODUCT_ID = "similar-456";
+    private static final String TEST_PRODUCT_NAME = "Test Product";
+    private static final BigDecimal TEST_PRICE = new BigDecimal("29.99");
+    private static final boolean TEST_AVAILABILITY = true;
 
     @Test
-    void getProductSimilar_shouldReturnNonEmptySet() {
+    void getProductSimilar_shouldReturnEmptySetForNullInput() {
+        // When
+        Set<Product> result = productService.getProductSimilar(null);
+
+        // Then
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void getProductSimilar_shouldCallRepositoryWithCorrectId() {
+        // Given
+        Product testProduct = createTestProduct(TEST_PRODUCT_ID);
+        Product similarProduct = createSimilarProduct(SIMILAR_PRODUCT_ID);
+        when(existingProductRepository.getSimilarProducts(TEST_PRODUCT_ID))
+                .thenReturn(Set.of(testProduct, similarProduct));
+
         // When
         Set<Product> result = productService.getProductSimilar(TEST_PRODUCT_ID);
 
         // Then
-        assertThat(result).isNotNull().isNotEmpty();
+        verify(existingProductRepository).getSimilarProducts(TEST_PRODUCT_ID);
+        assertThat(result).hasSize(2)
+                .extracting(Product::getId)
+                .containsExactlyInAnyOrder(TEST_PRODUCT_ID, SIMILAR_PRODUCT_ID);
     }
 
     @Test
-    void getProductSimilar_shouldReturnProductWithCorrectId() {
+    void getProductSimilar_shouldReturnEmptySetWhenRepositoryReturnsEmpty() {
+        // Given
+        when(existingProductRepository.getSimilarProducts(TEST_PRODUCT_ID))
+                .thenReturn(Collections.emptySet());
+
         // When
         Set<Product> result = productService.getProductSimilar(TEST_PRODUCT_ID);
 
         // Then
-        Product product = result.iterator().next();
-        assertEquals(TEST_PRODUCT_ID, product.getId(), 
-            "Product ID should match the input parameter");
+        assertThat(result).isEmpty();
     }
 
-    @Test
-    void getProductSimilar_shouldReturnProductWithExpectedValues() {
-        // When
-        Set<Product> result = productService.getProductSimilar(TEST_PRODUCT_ID);
-
-        // Then
-        Product product = result.iterator().next();
-        assertAll(
-            () -> assertEquals(EXPECTED_NAME, product.getName(), 
-                "Product name should be " + EXPECTED_NAME),
-            () -> assertEquals(0, EXPECTED_PRICE.compareTo(product.getPrice()),
-                "Product price should be " + EXPECTED_PRICE),
-            () -> assertNull(product.getAvailability(), 
-                "Availability should be null as it's not set in the service")
-        );
+    private Product createTestProduct(String id) {
+        return Product.builder()
+                .id(id)
+                .name(TEST_PRODUCT_NAME)
+                .price(TEST_PRICE)
+                .availability(TEST_AVAILABILITY)
+                .build();
     }
 
-    @Test
-    void getProductSimilar_shouldReturnDifferentObjectsForDifferentCalls() {
-        // When
-        Set<Product> firstCall = productService.getProductSimilar(TEST_PRODUCT_ID);
-        Set<Product> secondCall = productService.getProductSimilar(TEST_PRODUCT_ID);
-
-        // Then - Verify we get different object instances
-        assertNotSame(firstCall, secondCall, "Should return new Set instance on each call");
-        assertNotSame(
-            firstCall.iterator().next(), 
-            secondCall.iterator().next(),
-            "Should return new Product instance on each call"
-        );
+    private Product createSimilarProduct(String id) {
+        return Product.builder()
+                .id(id)
+                .name("Similar Product")
+                .price(new BigDecimal("19.99"))
+                .availability(true)
+                .build();
     }
 }

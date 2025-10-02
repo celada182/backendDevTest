@@ -7,4 +7,5 @@ import java.util.Set;
 public interface ExistingProductRepository {
     public Product getProduct(String productId);
     public Set<String> getProductSimilarIds(String productId);
+    public Set<Product> getSimilarProducts(String productId);
 }
