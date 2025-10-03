@@ -9,6 +9,10 @@ We already have an endpoint that provides the product Ids similar for a given on
 
 Note that _Test_ and _Mocks_ components are given, you must only implement _yourApp_.
 
+## Starting app
+Project is using generated sources created by the OpenAPI Generator plugin so it needs to compile before running:
+> mvn clean compile
+
 ## Testing and Self-evaluation
 You can run the same test we will put through your application. You just need to have docker installed.
 

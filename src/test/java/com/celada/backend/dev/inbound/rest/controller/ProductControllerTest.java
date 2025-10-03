@@ -15,10 +15,9 @@ import java.math.BigDecimal;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ProductControllerTest {
@@ -82,6 +81,49 @@ class ProductControllerTest {
         productController.getProductSimilar(expectedProductId);
 
         // Then - verify is handled by Mockito's strict stubbing
+    }
+
+    @Test
+    void getProductSimilar_shouldReturnNotFoundWhenNoSimilarProductsFound() {
+        // Given
+        when(productService.getProductSimilar(anyString()))
+                .thenReturn(Set.of());
+
+        // When
+        ResponseEntity<Set<ProductDetail>> response = productController.getProductSimilar(TEST_PRODUCT_ID);
+
+        // Then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    void getProductSimilar_shouldHandleServiceException() {
+        // Given
+        when(productService.getProductSimilar(anyString()))
+                .thenThrow(new RuntimeException("Service error"));
+
+        // When / Then
+        assertThrows(RuntimeException.class, () -> 
+            productController.getProductSimilar(TEST_PRODUCT_ID)
+        );
+    }
+
+    @Test
+    void getProductSimilar_shouldHandleNullProductId() {
+        // When
+        ResponseEntity<Set<ProductDetail>> response = productController.getProductSimilar(null);
+
+        // Then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    void getProductSimilar_shouldHandleEmptyProductId() {
+        // When
+        ResponseEntity<Set<ProductDetail>> response = productController.getProductSimilar("");
+
+        // Then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
 
     private Product createTestProduct() {

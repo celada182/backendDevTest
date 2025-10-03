@@ -22,6 +22,8 @@ paths:
             application/json:
               schema:
                  $ref: '#/components/schemas/SimilarProducts'
+        '400':
+          description: Invalid product ID
         '404':
           description: Product Not found
 components:

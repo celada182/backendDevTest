@@ -21,7 +21,13 @@ public class ProductController implements ProductApi {
 
     @Override
     public ResponseEntity<Set<ProductDetail>> getProductSimilar(String productId) {
+        if (productId == null || productId.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
         Set<Product> products = productService.getProductSimilar(productId);
+        if (products.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
         Set<ProductDetail> productDetails = ProductRestAdapter.adapt(products);
         return ResponseEntity.ok(productDetails);
     }
