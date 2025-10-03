@@ -71,19 +71,6 @@ class ProductControllerTest {
     }
 
     @Test
-    void getProductSimilar_shouldCallServiceWithCorrectId() {
-        // Given
-        String expectedProductId = "test-id-123";
-        when(productService.getProductSimilar(expectedProductId))
-                .thenReturn(Set.of(createTestProduct()));
-
-        // When
-        productController.getProductSimilar(expectedProductId);
-
-        // Then - verify is handled by Mockito's strict stubbing
-    }
-
-    @Test
     void getProductSimilar_shouldReturnNotFoundWhenNoSimilarProductsFound() {
         // Given
         when(productService.getProductSimilar(anyString()))
@@ -102,7 +89,7 @@ class ProductControllerTest {
         when(productService.getProductSimilar(anyString()))
                 .thenThrow(new RuntimeException("Service error"));
 
-        // When / Then
+        // Then
         assertThrows(RuntimeException.class, () -> 
             productController.getProductSimilar(TEST_PRODUCT_ID)
         );

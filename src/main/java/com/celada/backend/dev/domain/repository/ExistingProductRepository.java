@@ -3,9 +3,9 @@ package com.celada.backend.dev.domain.repository;
 import com.celada.backend.dev.domain.model.Product;
 
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 public interface ExistingProductRepository {
-    public Product getProduct(String productId);
-    public Set<String> getProductSimilarIds(String productId);
-    public Set<Product> getSimilarProducts(String productId);
+    Set<String> getProductSimilarIds(String productId);
+    CompletableFuture<Product> getProductAsync(String productId);
 }

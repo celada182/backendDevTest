@@ -2,15 +2,18 @@ package com.celada.backend.dev.outbound.rest;
 
 import com.celada.backend.dev.domain.model.Product;
 import com.celada.backend.dev.domain.repository.ExistingProductRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.client.RestClient;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 @Repository
+@Slf4j
 public class ExistingProductRestRepository implements ExistingProductRepository {
     @Value("${existingProductApi.uriBase}")
     private String uriBase;
@@ -19,14 +22,6 @@ public class ExistingProductRestRepository implements ExistingProductRepository 
 
     public ExistingProductRestRepository() {
         this.restClient = RestClient.create();
-    }
-
-    @Override
-    public Product getProduct(String productId) {
-        return restClient.get()
-                .uri(uriBase + "/product/" + productId)
-                .retrieve()
-                .body(Product.class);
     }
 
     @Override
@@ -40,14 +35,13 @@ public class ExistingProductRestRepository implements ExistingProductRepository 
     }
 
     @Override
-    public Set<Product> getSimilarProducts(String productId) {
-        if (productId == null) return Collections.emptySet();
-        Set<String> ids = getProductSimilarIds(productId);
-        Set<Product> products = new HashSet<>();
-        for (String id : ids) {
-            Product product = getProduct(id);
-            products.add(product);
-        }
-        return products;
+    @Async
+    public CompletableFuture<Product> getProductAsync(String productId) {
+        log.info("Getting product {}", productId);
+        Product product = restClient.get()
+                .uri(uriBase + "/product/" + productId)
+                .retrieve()
+                .body(Product.class);
+        return CompletableFuture.completedFuture(product);
     }
 }
