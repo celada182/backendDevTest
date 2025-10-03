@@ -11,10 +11,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.HashSet;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ProductServiceTest {
@@ -43,31 +44,44 @@ class ProductServiceTest {
     @Test
     void getProductSimilar_shouldCallRepositoryWithCorrectId() {
         // Given
-        Product testProduct = createTestProduct(TEST_PRODUCT_ID);
-        Product similarProduct = createSimilarProduct(SIMILAR_PRODUCT_ID);
-        when(existingProductRepository.getSimilarProducts(TEST_PRODUCT_ID))
-                .thenReturn(Set.of(testProduct, similarProduct));
+        Set<String> similarIds = new HashSet<>();
+        similarIds.add(SIMILAR_PRODUCT_ID);
+        similarIds.add("another-789");
+        
+        Product similarProduct1 = createSimilarProduct(SIMILAR_PRODUCT_ID);
+        Product similarProduct2 = createSimilarProduct("another-789");
+        
+        when(existingProductRepository.getProductSimilarIds(TEST_PRODUCT_ID)).thenReturn(similarIds);
+        when(existingProductRepository.getProductAsync(SIMILAR_PRODUCT_ID))
+                .thenReturn(CompletableFuture.completedFuture(similarProduct1));
+        when(existingProductRepository.getProductAsync("another-789"))
+                .thenReturn(CompletableFuture.completedFuture(similarProduct2));
 
         // When
         Set<Product> result = productService.getProductSimilar(TEST_PRODUCT_ID);
 
         // Then
-        verify(existingProductRepository).getSimilarProducts(TEST_PRODUCT_ID);
+        verify(existingProductRepository).getProductSimilarIds(TEST_PRODUCT_ID);
+        verify(existingProductRepository).getProductAsync(SIMILAR_PRODUCT_ID);
+        verify(existingProductRepository).getProductAsync("another-789");
+        
         assertThat(result).hasSize(2)
                 .extracting(Product::getId)
-                .containsExactlyInAnyOrder(TEST_PRODUCT_ID, SIMILAR_PRODUCT_ID);
+                .containsExactlyInAnyOrder(SIMILAR_PRODUCT_ID, "another-789");
     }
 
     @Test
-    void getProductSimilar_shouldReturnEmptySetWhenRepositoryReturnsEmpty() {
+    void getProductSimilar_shouldReturnEmptySetWhenNoSimilarIdsFound() {
         // Given
-        when(existingProductRepository.getSimilarProducts(TEST_PRODUCT_ID))
+        when(existingProductRepository.getProductSimilarIds(TEST_PRODUCT_ID))
                 .thenReturn(Collections.emptySet());
 
         // When
         Set<Product> result = productService.getProductSimilar(TEST_PRODUCT_ID);
 
         // Then
+        verify(existingProductRepository).getProductSimilarIds(TEST_PRODUCT_ID);
+        verify(existingProductRepository, never()).getProductAsync(anyString());
         assertThat(result).isEmpty();
     }
 

@@ -20,8 +20,8 @@ public class ExistingProductRestRepository implements ExistingProductRepository 
 
     private final RestClient restClient;
 
-    public ExistingProductRestRepository() {
-        this.restClient = RestClient.create();
+    public ExistingProductRestRepository(RestClient.Builder restClientBuilder) {
+        this.restClient = restClientBuilder.build();
     }
 
     @Override
