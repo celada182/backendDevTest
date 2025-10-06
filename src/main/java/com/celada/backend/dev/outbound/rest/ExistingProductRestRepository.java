@@ -4,9 +4,9 @@ import com.celada.backend.dev.configuration.ExistingProductApiConfiguration;
 import com.celada.backend.dev.domain.model.Product;
 import com.celada.backend.dev.domain.repository.ExistingProductRepository;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Repository;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Collections;
@@ -39,7 +39,13 @@ public class ExistingProductRestRepository implements ExistingProductRepository 
     public CompletableFuture<Product> getProductAsync(String productId) {
         log.info("Getting product {}", productId);
         String url = config.getBase() + String.format(config.getProduct(), productId);
-        Product product = restTemplate.getForEntity(url, Product.class).getBody();
-        return CompletableFuture.completedFuture(product);
+        try {
+            Product product = restTemplate.getForEntity(url, Product.class).getBody();
+            return CompletableFuture.completedFuture(product);
+        } catch (RestClientException e) {
+            log.error("Error getting product {}",productId, e);
+            return CompletableFuture.completedFuture(null);
+        }
+
     }
 }
