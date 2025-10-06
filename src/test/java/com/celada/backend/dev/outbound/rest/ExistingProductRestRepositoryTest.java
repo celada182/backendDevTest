@@ -3,115 +3,113 @@ package com.celada.backend.dev.outbound.rest;
 import com.celada.backend.dev.domain.model.Product;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.client.RestClientTest;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.client.MockRestServiceServer;
-import org.springframework.web.client.RestClient;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.SpringBootConfiguration;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
-import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
-@RestClientTest(ExistingProductRestRepository.class)
+@ExtendWith(MockitoExtension.class)
 class ExistingProductRestRepositoryTest {
 
     private static final String BASE_URI = "http://test-api.com";
     private static final String PRODUCT_ID = "test-123";
     private static final String[] SIMILAR_IDS = {"similar-1", "similar-2"};
 
-    @Autowired
+    @Mock
+    private RestTemplate restTemplate;
+
+    @InjectMocks
     private ExistingProductRestRepository repository;
 
-    @Autowired
-    private RestClient.Builder restClientBuilder;
-
-    private MockRestServiceServer mockServer;
-
     @BeforeEach
-    void setup() {
-        mockServer = MockRestServiceServer.bindTo(restClientBuilder).build();
+    void setUp() {
+        repository = new ExistingProductRestRepository(restTemplate);
+        ReflectionTestUtils.setField(repository, "uriBase", "http://test-api.com");
     }
 
     @Test
-    void foo() throws ExecutionException, InterruptedException {
-        String uri = BASE_URI + "/product/" + PRODUCT_ID;
-        mockServer.expect(requestTo(uri)).andRespond(withSuccess("aa", MediaType.APPLICATION_JSON));
+    void getProductSimilarIds_shouldReturnSetOfIds() {
+        // Given
+        String url = BASE_URI + "/product/" + PRODUCT_ID + "/similarids";
+        when(restTemplate.getForEntity(eq(url), eq(String[].class)))
+                .thenReturn(new ResponseEntity<>(SIMILAR_IDS, HttpStatus.OK));
 
-        CompletableFuture<Product> result = repository.getProductAsync(PRODUCT_ID);
-        assertEquals("aa", result.get().getName());
+        // When
+        Set<String> result = repository.getProductSimilarIds(PRODUCT_ID);
+
+        // Then
+        assertEquals(2, result.size());
+        assertTrue(result.contains("similar-1"));
+        assertTrue(result.contains("similar-2"));
+        verify(restTemplate).getForEntity(eq(url), eq(String[].class));
     }
 
-//    @Test
-//    void getProductSimilarIds_shouldReturnSetOfIds() {
-//        // Given
-//        server.expect(requestTo(BASE_URI + "/product/" + PRODUCT_ID + "/similarids"))
-//                .andRespond(withSuccess(SIMILAR_IDS.toString(), MediaType.APPLICATION_JSON));
-//
-//        // When
-//        Set<String> result = repository.getProductSimilarIds(PRODUCT_ID);
-//
-//        // Then
-//        verify(restClient.get()).uri(BASE_URI + "/product/" + PRODUCT_ID + "/similarids");
-//        assertThat(result)
-//                .hasSize(2)
-//                .containsExactlyInAnyOrder(SIMILAR_IDS);
-//    }
+    @Test
+    void getProductSimilarIds_shouldReturnEmptySetWhenResponseIsNull() {
+        // Given
+        String url = BASE_URI + "/product/" + PRODUCT_ID + "/similarids";
+        when(restTemplate.getForEntity(eq(url), eq(String[].class)))
+                .thenReturn(new ResponseEntity<>(null, HttpStatus.OK));
 
-//    @Test
-//    void getProductSimilarIds_shouldReturnEmptySetWhenResponseIsNull() {
-//        // Given
-//        when(responseSpec.body(String[].class)).thenReturn(null);
-//
-//        // When
-//        Set<String> result = repository.getProductSimilarIds(PRODUCT_ID);
-//
-//        // Then
-//        verify(restClient.get()).uri(BASE_URI + "/product/" + PRODUCT_ID + "/similarids");
-//        assertThat(result).isEmpty();
-//    }
-//
-//    @Test
-//    void getProductAsync_shouldReturnProduct() throws Exception {
-//        // Given
-//        Product expectedProduct = createTestProduct(PRODUCT_ID);
-//        when(responseSpec.body(Product.class)).thenReturn(expectedProduct);
-//
-//        // When
-//        CompletableFuture<Product> future = repository.getProductAsync(PRODUCT_ID);
-//        Product result = future.get();
-//
-//        // Then
-//        verify(restClient.get()).uri(BASE_URI + "/product/" + PRODUCT_ID);
-//        assertThat(result)
-//            .isNotNull()
-//            .isEqualTo(expectedProduct);
-//    }
-//
-//    @Test
-//    void getProductAsync_shouldHandleNullResponse() throws Exception {
-//        // Given
-//        when(responseSpec.body(Product.class)).thenReturn(null);
-//
-//        // When
-//        CompletableFuture<Product> future = repository.getProductAsync(PRODUCT_ID);
-//        Product result = future.get();
-//
-//        // Then
-//        verify(restClient.get()).uri(BASE_URI + "/product/" + PRODUCT_ID);
-//        assertThat(result).isNull();
-//    }
+        // When
+        Set<String> result = repository.getProductSimilarIds(PRODUCT_ID);
 
-    private Product createTestProduct(String id) {
-        return Product.builder()
-                .id(id)
+        // Then
+        assertTrue(result.isEmpty());
+        verify(restTemplate).getForEntity(eq(url), eq(String[].class));
+    }
+
+    @Test
+    void getProductAsync_shouldReturnProduct() throws ExecutionException, InterruptedException {
+        // Given
+        Product expectedProduct = Product.builder()
+                .id(PRODUCT_ID)
                 .name("Test Product")
-                .price(new BigDecimal("29.99"))
+                .price(BigDecimal.TEN)
                 .availability(true)
                 .build();
+        String url = BASE_URI + "/product/" + PRODUCT_ID;
+        when(restTemplate.getForEntity(eq(url), eq(Product.class)))
+                .thenReturn(new ResponseEntity<>(expectedProduct, HttpStatus.OK));
+
+        // When
+        CompletableFuture<Product> future = repository.getProductAsync(PRODUCT_ID);
+        Product result = future.get();
+
+        // Then
+        assertNotNull(result);
+        assertEquals(PRODUCT_ID, result.getId());
+        assertEquals("Test Product", result.getName());
+        verify(restTemplate).getForEntity(eq(url), eq(Product.class));
+    }
+
+    @Test
+    void getProductAsync_shouldHandleNullResponse() throws Exception {
+        // Given
+        String url = BASE_URI + "/product/" + PRODUCT_ID;
+        when(restTemplate.getForEntity(eq(url), eq(Product.class)))
+                .thenReturn(new ResponseEntity<>(null, HttpStatus.OK));
+
+        // When
+        CompletableFuture<Product> future = repository.getProductAsync(PRODUCT_ID);
+        Product result = future.get();
+
+        // Then
+        assertNull(result);
+        verify(restTemplate).getForEntity(eq(url), eq(Product.class));
     }
 }

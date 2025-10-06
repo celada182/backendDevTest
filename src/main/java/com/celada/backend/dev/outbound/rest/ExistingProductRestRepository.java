@@ -6,7 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Repository;
-import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.Collections;
 import java.util.Set;
@@ -18,18 +18,16 @@ public class ExistingProductRestRepository implements ExistingProductRepository 
     @Value("${existingProductApi.uriBase}")
     private String uriBase;
 
-    private final RestClient restClient;
+    private final RestTemplate restTemplate;
 
-    public ExistingProductRestRepository(RestClient.Builder restClientBuilder) {
-        this.restClient = restClientBuilder.build();
+    public ExistingProductRestRepository(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
     }
 
     @Override
     public Set<String> getProductSimilarIds(String productId) {
-        String[] result = restClient.get()
-                .uri(uriBase + "/product/" + productId + "/similarids")
-                .retrieve()
-                .body(String[].class);
+        String url = uriBase + "/product/" + productId + "/similarids";
+        String[] result = restTemplate.getForEntity(url, String[].class).getBody();
         if (result == null) return Collections.emptySet();
         return Set.of(result);
     }
@@ -38,10 +36,9 @@ public class ExistingProductRestRepository implements ExistingProductRepository 
     @Async
     public CompletableFuture<Product> getProductAsync(String productId) {
         log.info("Getting product {}", productId);
-        Product product = restClient.get()
-                .uri(uriBase + "/product/" + productId)
-                .retrieve()
-                .body(Product.class);
+        //Config
+        String url = uriBase + "/product/" + productId;
+        Product product = restTemplate.getForEntity(url, Product.class).getBody();
         return CompletableFuture.completedFuture(product);
     }
 }
