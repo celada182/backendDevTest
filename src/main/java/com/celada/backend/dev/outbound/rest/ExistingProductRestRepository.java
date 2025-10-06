@@ -9,9 +9,10 @@ import org.springframework.stereotype.Repository;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+
+import static java.util.Collections.emptySet;
 
 @Repository
 @Slf4j
@@ -29,9 +30,14 @@ public class ExistingProductRestRepository implements ExistingProductRepository 
     @Override
     public Set<String> getProductSimilarIds(String productId) {
         String url = config.getBase() + String.format(config.getSimilarIds(), productId);
-        String[] result = restTemplate.getForEntity(url, String[].class).getBody();
-        if (result == null) return Collections.emptySet();
-        return Set.of(result);
+        try {
+            String[] result = restTemplate.getForEntity(url, String[].class).getBody();
+            if (result == null) return emptySet();
+            return Set.of(result);
+        } catch (RestClientException e) {
+            log.error("Error getting similar ids for product {}", productId, e);
+            return emptySet();
+        }
     }
 
     @Override
@@ -43,7 +49,7 @@ public class ExistingProductRestRepository implements ExistingProductRepository 
             Product product = restTemplate.getForEntity(url, Product.class).getBody();
             return CompletableFuture.completedFuture(product);
         } catch (RestClientException e) {
-            log.error("Error getting product {}",productId, e);
+            log.error("Error getting product {}", productId, e);
             return CompletableFuture.completedFuture(null);
         }
 
