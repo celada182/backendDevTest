@@ -3,6 +3,8 @@ package com.celada.backend.dev.outbound.rest;
 import com.celada.backend.dev.configuration.ExistingProductApiConfiguration;
 import com.celada.backend.dev.domain.model.Product;
 import com.celada.backend.dev.domain.repository.ExistingProductRepository;
+import com.celada.backend.dev.outbound.rest.adapter.ExistingProductRestAdapter;
+import com.celada.backend.dev.outbound.rest.model.ExistingProduct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Repository;
@@ -46,7 +48,8 @@ public class ExistingProductRestRepository implements ExistingProductRepository 
         log.info("Getting product {}", productId);
         String url = config.getBase() + String.format(config.getProduct(), productId);
         try {
-            Product product = restTemplate.getForEntity(url, Product.class).getBody();
+            ExistingProduct existingProduct = restTemplate.getForEntity(url, ExistingProduct.class).getBody();
+            Product product = ExistingProductRestAdapter.adapt(existingProduct);
             return CompletableFuture.completedFuture(product);
         } catch (RestClientException e) {
             log.error("Error getting product {}", productId, e);

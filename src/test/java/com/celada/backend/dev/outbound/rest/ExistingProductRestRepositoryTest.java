@@ -2,6 +2,7 @@ package com.celada.backend.dev.outbound.rest;
 
 import com.celada.backend.dev.configuration.ExistingProductApiConfiguration;
 import com.celada.backend.dev.domain.model.Product;
+import com.celada.backend.dev.outbound.rest.model.ExistingProduct;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -84,14 +85,14 @@ class ExistingProductRestRepositoryTest {
     @Test
     void getProductAsync_shouldReturnProduct() throws ExecutionException, InterruptedException {
         // Given
-        Product expectedProduct = Product.builder()
+        ExistingProduct expectedProduct = ExistingProduct.builder()
                 .id(PRODUCT_ID)
                 .name("Test Product")
                 .price(BigDecimal.TEN)
                 .availability(true)
                 .build();
         String url = BASE_URI + "/product/" + PRODUCT_ID;
-        when(restTemplate.getForEntity(eq(url), eq(Product.class)))
+        when(restTemplate.getForEntity(eq(url), eq(ExistingProduct.class)))
                 .thenReturn(new ResponseEntity<>(expectedProduct, HttpStatus.OK));
 
         // When
@@ -103,14 +104,14 @@ class ExistingProductRestRepositoryTest {
         assertNotNull(result);
         assertEquals(PRODUCT_ID, result.getId());
         assertEquals("Test Product", result.getName());
-        verify(restTemplate).getForEntity(eq(url), eq(Product.class));
+        verify(restTemplate).getForEntity(eq(url), eq(ExistingProduct.class));
     }
 
     @Test
     void getProductAsync_shouldHandleNullResponse() throws Exception {
         // Given
         String url = BASE_URI + "/product/" + PRODUCT_ID;
-        when(restTemplate.getForEntity(eq(url), eq(Product.class)))
+        when(restTemplate.getForEntity(eq(url), eq(ExistingProduct.class)))
                 .thenReturn(new ResponseEntity<>(null, HttpStatus.OK));
 
         // When
@@ -120,6 +121,6 @@ class ExistingProductRestRepositoryTest {
 
         // Then
         assertNull(result);
-        verify(restTemplate).getForEntity(eq(url), eq(Product.class));
+        verify(restTemplate).getForEntity(eq(url), eq(ExistingProduct.class));
     }
 }
