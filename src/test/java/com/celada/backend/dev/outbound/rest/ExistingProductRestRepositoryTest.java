@@ -1,5 +1,6 @@
 package com.celada.backend.dev.outbound.rest;
 
+import com.celada.backend.dev.configuration.ExistingProductApiConfiguration;
 import com.celada.backend.dev.domain.model.Product;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -8,8 +9,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.SpringBootConfiguration;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestTemplate;
 
@@ -32,13 +35,16 @@ class ExistingProductRestRepositoryTest {
     @Mock
     private RestTemplate restTemplate;
 
+    @Mock
+    private ExistingProductApiConfiguration config;
+
     @InjectMocks
     private ExistingProductRestRepository repository;
 
     @BeforeEach
     void setUp() {
-        repository = new ExistingProductRestRepository(restTemplate);
-        ReflectionTestUtils.setField(repository, "uriBase", "http://test-api.com");
+        repository = new ExistingProductRestRepository(restTemplate, config);
+        when(config.getBase()).thenReturn(BASE_URI);
     }
 
     @Test
@@ -49,6 +55,7 @@ class ExistingProductRestRepositoryTest {
                 .thenReturn(new ResponseEntity<>(SIMILAR_IDS, HttpStatus.OK));
 
         // When
+        when(config.getSimilarIds()).thenReturn("/product/%s/similarids");
         Set<String> result = repository.getProductSimilarIds(PRODUCT_ID);
 
         // Then
@@ -66,6 +73,7 @@ class ExistingProductRestRepositoryTest {
                 .thenReturn(new ResponseEntity<>(null, HttpStatus.OK));
 
         // When
+        when(config.getSimilarIds()).thenReturn("/product/%s/similarids");
         Set<String> result = repository.getProductSimilarIds(PRODUCT_ID);
 
         // Then
@@ -87,6 +95,7 @@ class ExistingProductRestRepositoryTest {
                 .thenReturn(new ResponseEntity<>(expectedProduct, HttpStatus.OK));
 
         // When
+        when(config.getProduct()).thenReturn("/product/%s");
         CompletableFuture<Product> future = repository.getProductAsync(PRODUCT_ID);
         Product result = future.get();
 
@@ -105,6 +114,7 @@ class ExistingProductRestRepositoryTest {
                 .thenReturn(new ResponseEntity<>(null, HttpStatus.OK));
 
         // When
+        when(config.getProduct()).thenReturn("/product/%s");
         CompletableFuture<Product> future = repository.getProductAsync(PRODUCT_ID);
         Product result = future.get();
 
